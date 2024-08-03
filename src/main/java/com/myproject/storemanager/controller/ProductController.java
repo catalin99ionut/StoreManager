@@ -1,5 +1,7 @@
 package com.myproject.storemanager.controller;
 
+import com.myproject.storemanager.api.requests.NameRequest;
+import com.myproject.storemanager.api.requests.PriceRequest;
 import com.myproject.storemanager.model.Product;
 import com.myproject.storemanager.service.ProductService;
 import org.springframework.http.ResponseEntity;
@@ -37,13 +39,13 @@ public class ProductController {
     }
 
     @PutMapping("/{id}/price")
-    public ResponseEntity<Product> updatePrice(@PathVariable Long id, @RequestParam Double price) {
-        return ResponseEntity.ok(productService.updatePrice(id, price));
+    public ResponseEntity<Product> updatePrice(@PathVariable Long id, @RequestBody PriceRequest request) {
+        return ResponseEntity.ok(productService.updatePrice(id, request.getPrice()));
     }
 
     @PutMapping("/{id}/name")
-    public ResponseEntity<Product> updateName(@PathVariable Long id, @RequestParam String name) {
-        return ResponseEntity.ok(productService.updateName(id, name));
+    public ResponseEntity<Product> updateName(@PathVariable Long id, @RequestBody NameRequest request) {
+        return ResponseEntity.ok(productService.updateName(id, request.getName()));
     }
 
     @DeleteMapping("/{id}")
