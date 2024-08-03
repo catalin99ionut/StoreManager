@@ -18,9 +18,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/products")
 public class ProductController {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
-
     private final ProductService productService;
 
     public ProductController(ProductService productService) {
@@ -29,56 +26,27 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
-        List<Product> products = productService.findAll();
-        logger.info("Retrieved {} products", products.size());
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(productService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        try {
-            Product product = productService.findById(id);
-            logger.info("Retrieved product: {}", product);
-            return ResponseEntity.ok(product);
-        } catch (ProductNotFoundException e) {
-            logger.info("Product with ID {} not found", id);
-            throw e;
-        }
+        return ResponseEntity.ok(productService.findById(id));
     }
 
     @PostMapping
     public ResponseEntity<Product> addProduct(@RequestBody Product product) {
-        try {
-            Product createdProduct = productService.addProduct(product);
-            logger.info("Created product with ID: {}", createdProduct.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
-        } catch (ProductCreateException e) {
-            logger.error("Product creation failed", e);
-            throw e;
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.addProduct(product));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductUpdateRequest request) {
-        try {
-            Product updatedProduct = productService.updateProduct(id, request);
-            logger.info("Updated product with ID: {}", updatedProduct.getId());
-            return ResponseEntity.ok(updatedProduct);
-        } catch (ProductUpdateException e) {
-            logger.error("Product update failed", e);
-            throw e;
-        }
+        return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
-        try {
-            productService.deleteProduct(id);
-            logger.info("Deleted product with ID: {}", id);
-            return ResponseEntity.ok("Product deleted successfully");
-        } catch (ProductDeleteException e) {
-            logger.error("Product deletion failed", e);
-            throw e;
-        }
+        productService.deleteProduct(id);
+        return ResponseEntity.ok("Product deleted successfully");
     }
 }

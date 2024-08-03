@@ -18,25 +18,25 @@ public class ProductExceptionHandler {
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductCreateException(ProductCreateException e) {
-        logger.error("Error creating product: {}", e.getMessage());
+        logger.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductUpdateException(ProductUpdateException e) {
-        logger.error("Error updating product: {}", e.getMessage());
+        logger.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductDeleteException(ProductDeleteException e) {
-        logger.error("Error deleting product: {}", e.getMessage());
+        logger.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductNotFoundException(ProductNotFoundException e) {
-        logger.info("Product doesn't exist: {}", e.getMessage());
+        logger.info(e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }
