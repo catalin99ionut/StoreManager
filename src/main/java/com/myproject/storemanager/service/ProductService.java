@@ -62,7 +62,6 @@ public class ProductService {
         Product product = findById(id);
 
         try {
-            String productJson = objectMapper.writeValueAsString(product);
             if (request.getName() != null) {
                 product.setName(request.getName());
             }
@@ -70,6 +69,7 @@ public class ProductService {
                 product.setPrice(request.getPrice());
             }
             Product updatedProduct = productRepository.save(product);
+            String productJson = objectMapper.writeValueAsString(updatedProduct);
             logger.info("Successfully updated product with ID {}. New fields: {}", updatedProduct.getId(), productJson);
             return updatedProduct;
         } catch (JsonProcessingException e) {

@@ -18,19 +18,19 @@ public class ProductExceptionHandler {
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductCreateException(ProductCreateException e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductUpdateException(ProductUpdateException e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductDeleteException(ProductDeleteException e) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 
