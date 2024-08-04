@@ -1,6 +1,6 @@
 package com.myproject.storemanager.api.request;
 
-public class ProductUpdateRequest {
+public class ProductRequest {
 
     private String name;
     private Double price;

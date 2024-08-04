@@ -2,7 +2,7 @@ package com.myproject.storemanager.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.myproject.storemanager.api.request.ProductUpdateRequest;
+import com.myproject.storemanager.api.request.ProductRequest;
 import com.myproject.storemanager.exception.ProductCreateException;
 import com.myproject.storemanager.exception.ProductDeleteException;
 import com.myproject.storemanager.exception.ProductNotFoundException;
@@ -29,8 +29,12 @@ public class ProductService {
     }
 
     public List<Product> findAll() {
-        logger.info("Fetching all products");
-        return productRepository.findAll();
+        List<Product> products = productRepository.findAll();
+        if (products.isEmpty()) {
+            throw new ProductNotFoundException("There are no products in the database.");
+        }
+        logger.info("Fetched all products");
+        return products;
     }
 
     public Product findById(Long id) {
@@ -45,7 +49,25 @@ public class ProductService {
         }
     }
 
-    public Product addProduct(Product product) {
+    public List<Product> findByName(String name) {
+        List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
+        if (products.isEmpty()) {
+            throw new ProductNotFoundException("No " + name + " was found.");
+        }
+        logger.info("Retrieved products: {}", products);
+        return products;
+    }
+
+    public Product addProduct(ProductRequest request) {
+        if (request.getName() == null || request.getName().trim().isEmpty()) {
+            throw new ProductCreateException("Product name cannot be empty.");
+        }
+        if (request.getPrice() == null) {
+            throw new ProductCreateException("Product price cannot be empty.");
+        }
+
+        Product product = new Product(request.getName(), request.getPrice());
+
         try {
             Product savedProduct = productRepository.save(product);
             String productJson = objectMapper.writeValueAsString(savedProduct);
@@ -58,7 +80,7 @@ public class ProductService {
         }
     }
 
-    public Product updateProduct(Long id, ProductUpdateRequest request) {
+    public Product updateProduct(Long id, ProductRequest request) {
         Product product = findById(id);
 
         try {

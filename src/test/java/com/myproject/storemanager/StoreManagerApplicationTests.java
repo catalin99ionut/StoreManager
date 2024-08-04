@@ -1,7 +1,7 @@
 package com.myproject.storemanager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.myproject.storemanager.api.request.ProductUpdateRequest;
+import com.myproject.storemanager.api.request.ProductRequest;
 import com.myproject.storemanager.exception.ProductNotFoundException;
 import com.myproject.storemanager.model.Product;
 import com.myproject.storemanager.repository.ProductRepository;
@@ -13,9 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +45,11 @@ class StoreManagerApplicationTests {
 	public void testAddProduct() {
 		when(productRepository.save(product)).thenReturn(product);
 
-		Product result = productService.addProduct(product);
+		ProductRequest request = new ProductRequest();
+		request.setName(product.getName());
+		request.setPrice(product.getPrice());
+
+		Product result = productService.addProduct(request);
 
 		Assertions.assertEquals(product.getId(), result.getId());
 		Assertions.assertEquals(product.getName(), result.getName());
@@ -118,7 +120,7 @@ class StoreManagerApplicationTests {
 		when(productRepository.save(any(Product.class))).thenReturn(product);
 		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 
-		ProductUpdateRequest request = new ProductUpdateRequest();
+		ProductRequest request = new ProductRequest();
 		request.setName("Updated Name");
 		request.setPrice(110.0);
 
@@ -136,7 +138,7 @@ class StoreManagerApplicationTests {
 		when(productRepository.save(any(Product.class))).thenReturn(product);
 		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 
-		ProductUpdateRequest request = new ProductUpdateRequest();
+		ProductRequest request = new ProductRequest();
 		request.setName("Updated Name");
 
 		Product result = productService.updateProduct(product.getId(), request);
@@ -154,7 +156,7 @@ class StoreManagerApplicationTests {
 
 		ProductNotFoundException exception = Assertions
 				.assertThrows(ProductNotFoundException.class,
-						() -> productService.updateProduct(product.getId(), new ProductUpdateRequest()));
+						() -> productService.updateProduct(product.getId(), new ProductRequest()));
 
 		Assertions.assertEquals("Product with ID " + product.getId() + " was not found",
 				exception.getMessage());

@@ -18,7 +18,11 @@ public class ProductExceptionHandler {
 
     @ExceptionHandler
     public ResponseEntity<String> handleProductCreateException(ProductCreateException e) {
-        logger.error(e.getMessage(), e);
+        if (e.getCause() != null) {
+            logger.error(e.getMessage(), e);
+        } else {
+            logger.info(e.getMessage());
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 

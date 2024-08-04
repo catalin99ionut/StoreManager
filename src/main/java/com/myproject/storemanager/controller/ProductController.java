@@ -1,14 +1,8 @@
 package com.myproject.storemanager.controller;
 
-import com.myproject.storemanager.api.request.ProductUpdateRequest;
-import com.myproject.storemanager.exception.ProductCreateException;
-import com.myproject.storemanager.exception.ProductDeleteException;
-import com.myproject.storemanager.exception.ProductNotFoundException;
-import com.myproject.storemanager.exception.ProductUpdateException;
+import com.myproject.storemanager.api.request.ProductRequest;
 import com.myproject.storemanager.model.Product;
 import com.myproject.storemanager.service.ProductService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,18 +23,23 @@ public class ProductController {
         return ResponseEntity.ok(productService.findAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.findById(id));
     }
 
+    @GetMapping("/name/{name}")
+    public ResponseEntity<List<Product>> getProductByName(@PathVariable String name) {
+        return ResponseEntity.ok(productService.findByName(name));
+    }
+
     @PostMapping
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.addProduct(product));
+    public ResponseEntity<Product> addProduct(@RequestBody ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.addProduct(request));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductUpdateRequest request) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductRequest request) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 
