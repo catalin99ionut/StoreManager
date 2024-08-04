@@ -1,13 +1,184 @@
 package com.myproject.storemanager;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.myproject.storemanager.api.request.ProductUpdateRequest;
+import com.myproject.storemanager.exception.ProductNotFoundException;
+import com.myproject.storemanager.model.Product;
+import com.myproject.storemanager.repository.ProductRepository;
+import com.myproject.storemanager.service.ProductService;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class StoreManagerApplicationTests {
 
-	@Test
-	void contextLoads() {
+	@Mock
+	private ProductRepository productRepository;
+
+	@InjectMocks
+	private ProductService productService;
+    private Product product;
+
+	@BeforeEach
+	public void setup() {
+		productService = new ProductService(productRepository, new ObjectMapper());
+
+		product = new Product();
+		product.setId(1L);
+		product.setName("Test Product");
+		product.setPrice(100.0);
 	}
 
+	@Test
+	public void testAddProduct() {
+		when(productRepository.save(product)).thenReturn(product);
+
+		Product result = productService.addProduct(product);
+
+		Assertions.assertEquals(product.getId(), result.getId());
+		Assertions.assertEquals(product.getName(), result.getName());
+		Assertions.assertEquals(product.getPrice(), result.getPrice());
+		verify(productRepository, times(1)).save(product);
+	}
+
+	@Test
+	public void testFindAllProducts() {
+		List<Product> products = Collections.singletonList(product);
+		when(productRepository.findAll()).thenReturn(products);
+
+		List<Product> result = productService.findAll();
+
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(products.size(), result.size());
+		Assertions.assertEquals(product.getId(), result.get(0).getId());
+		Assertions.assertEquals(product.getName(), result.get(0).getName());
+		Assertions.assertEquals(product.getPrice(), result.get(0).getPrice());
+
+		verify(productRepository, times(1)).findAll();
+
+		Product secondProduct = new Product();
+		secondProduct.setId(2L);
+		secondProduct.setName("Test Product 2");
+		secondProduct.setPrice(100.0);
+
+		products = Arrays.asList(product, secondProduct);
+		when(productRepository.findAll()).thenReturn(products);
+
+		result = productService.findAll();
+
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(products.size(), result.size());
+		Assertions.assertEquals(secondProduct.getId(), result.get(1).getId());
+		Assertions.assertEquals(secondProduct.getName(), result.get(1).getName());
+		Assertions.assertEquals(secondProduct.getPrice(), result.get(1).getPrice());
+
+		verify(productRepository, times(2)).findAll();
+	}
+
+	@Test
+	public void testFindProductById_whenIdExists() {
+		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+		Product result = productService.findById(product.getId());
+
+		Assertions.assertEquals(product.getId(), result.getId());
+		Assertions.assertEquals(product.getName(), result.getName());
+		Assertions.assertEquals(product.getPrice(), result.getPrice());
+		verify(productRepository, times(1)).findById(product.getId());
+	}
+
+	@Test
+	public void testFindProductById_whenIdDoesNotExist() {
+		when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
+
+		ProductNotFoundException exception = Assertions
+				.assertThrows(ProductNotFoundException.class, () -> productService.findById(product.getId()));
+
+		Assertions.assertEquals("Product with ID " + product.getId() + " was not found",
+				exception.getMessage());
+		verify(productRepository, times(1)).findById(product.getId());
+	}
+
+	@Test
+	public void testUpdateProduct_withMultipleFieldChanges_whenIdExists() {
+		when(productRepository.save(any(Product.class))).thenReturn(product);
+		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+		ProductUpdateRequest request = new ProductUpdateRequest();
+		request.setName("Updated Name");
+		request.setPrice(110.0);
+
+		Product result = productService.updateProduct(product.getId(), request);
+
+		Assertions.assertEquals(product.getId(), result.getId());
+		Assertions.assertEquals(request.getName(), result.getName());
+		Assertions.assertEquals(request.getPrice(), result.getPrice());
+		verify(productRepository, times(1)).findById(product.getId());
+		verify(productRepository, times(1)).save(product);
+	}
+
+	@Test
+	public void testUpdateProduct_withOneFieldChange_whenIdExists() {
+		when(productRepository.save(any(Product.class))).thenReturn(product);
+		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+		ProductUpdateRequest request = new ProductUpdateRequest();
+		request.setName("Updated Name");
+
+		Product result = productService.updateProduct(product.getId(), request);
+
+		Assertions.assertEquals(product.getId(), result.getId());
+		Assertions.assertEquals(request.getName(), result.getName());
+		Assertions.assertEquals(product.getPrice(), result.getPrice());
+		verify(productRepository, times(1)).findById(product.getId());
+		verify(productRepository, times(1)).save(product);
+	}
+
+	@Test
+	public void testUpdateProduct_whenIdDoesNotExist() {
+		when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
+
+		ProductNotFoundException exception = Assertions
+				.assertThrows(ProductNotFoundException.class,
+						() -> productService.updateProduct(product.getId(), new ProductUpdateRequest()));
+
+		Assertions.assertEquals("Product with ID " + product.getId() + " was not found",
+				exception.getMessage());
+		verify(productRepository, times(1)).findById(product.getId());
+		verify(productRepository, never()).save(product);
+	}
+
+	@Test
+	public void testDeleteProduct_whenIdExists() {
+		when(productRepository.existsById(product.getId())).thenReturn(true);
+
+		productService.deleteProduct(product.getId());
+
+		verify(productRepository, times(1)).existsById(product.getId());
+		verify(productRepository, times(1)).deleteById(product.getId());
+	}
+
+	@Test
+	public void testDeleteProduct_whenIdDoesNotExist() {
+		when(productRepository.existsById(product.getId())).thenReturn(false);
+
+		Assertions.assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(product.getId()));
+
+		verify(productRepository, times(1)).existsById(product.getId());
+		verify(productRepository, never()).deleteById(product.getId());
+	}
 }
