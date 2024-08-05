@@ -17,7 +17,7 @@ public class CustomerAccessHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AccessDeniedException e) throws IOException {
-        logger.info("Access denied: {}", e.getMessage());
+        logger.info(e.getMessage());
         httpServletResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
         httpServletResponse.setContentType("application/json");
         httpServletResponse.getWriter().write("Access denied! You do not have permission to access this resource.");

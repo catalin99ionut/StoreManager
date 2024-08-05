@@ -31,7 +31,7 @@ public class ProductService {
     public List<Product> findAll() {
         List<Product> products = productRepository.findAll();
         if (products.isEmpty()) {
-            throw new ProductNotFoundException("There are no products in the database.");
+            throw new ProductNotFoundException("There are no products in the database");
         }
         logger.info("Fetched all products");
         return products;
@@ -52,18 +52,23 @@ public class ProductService {
     public List<Product> findByName(String name) {
         List<Product> products = productRepository.findByNameContainingIgnoreCase(name);
         if (products.isEmpty()) {
-            throw new ProductNotFoundException("No " + name + " was found.");
+            throw new ProductNotFoundException("No results for: " + name);
         }
-        logger.info("Retrieved products: {}", products);
-        return products;
+        try {
+            String productsJson = objectMapper.writeValueAsString(products);
+            logger.info("Retrieved products: {}", productsJson);
+            return products;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Product addProduct(ProductRequest request) {
         if (request.getName() == null || request.getName().trim().isEmpty()) {
-            throw new ProductCreateException("Product name cannot be empty.");
+            throw new ProductCreateException("Product name cannot be empty");
         }
         if (request.getPrice() == null) {
-            throw new ProductCreateException("Product price cannot be empty.");
+            throw new ProductCreateException("Product price cannot be empty");
         }
 
         Product product = new Product(request.getName(), request.getPrice());
