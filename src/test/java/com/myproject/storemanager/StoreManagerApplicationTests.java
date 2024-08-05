@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -43,18 +44,22 @@ class StoreManagerApplicationTests {
 
 	@Test
 	public void testAddProduct() {
-		when(productRepository.save(product)).thenReturn(product);
-
 		ProductRequest request = new ProductRequest();
 		request.setName(product.getName());
 		request.setPrice(product.getPrice());
+
+		when(productRepository.save(any(Product.class))).thenAnswer(invocationOnMock -> {
+			Product savedProduct = invocationOnMock.getArgument(0);
+			savedProduct.setId(product.getId());
+			return savedProduct;
+		});
 
 		Product result = productService.addProduct(request);
 
 		Assertions.assertEquals(product.getId(), result.getId());
 		Assertions.assertEquals(product.getName(), result.getName());
 		Assertions.assertEquals(product.getPrice(), result.getPrice());
-		verify(productRepository, times(1)).save(product);
+		verify(productRepository, times(1)).save(any(Product.class));
 	}
 
 	@Test
@@ -113,6 +118,63 @@ class StoreManagerApplicationTests {
 		Assertions.assertEquals("Product with ID " + product.getId() + " was not found",
 				exception.getMessage());
 		verify(productRepository, times(1)).findById(product.getId());
+	}
+
+	@Test
+	public void testFindByName_whenThereAreProductsWithNameContainingKeyword() {
+		String keyword = "test";
+		List<Product> productsSingleton = Collections.singletonList(product);
+		when(productRepository.findByNameContainingIgnoreCase(keyword)).thenReturn(productsSingleton);
+
+		List<Product> result = productService.findByName(keyword);
+
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(productsSingleton.size(), result.size());
+		Assertions.assertEquals(product.getId(), result.get(0).getId());
+		Assertions.assertEquals(product.getName(), result.get(0).getName());
+		Assertions.assertEquals(product.getPrice(), result.get(0).getPrice());
+
+		verify(productRepository, times(1)).findByNameContainingIgnoreCase(keyword);
+
+		Product secondProduct = new Product();
+		secondProduct.setId(2L);
+		secondProduct.setName("Product 2");
+		secondProduct.setPrice(100.0);
+
+		Product thirdProduct = new Product();
+		thirdProduct.setId(3L);
+		thirdProduct.setName("Test Product 3");
+		thirdProduct.setPrice(100.0);
+
+		List<Product> products = Arrays.asList(product, secondProduct, thirdProduct);
+		when(productRepository.findByNameContainingIgnoreCase(keyword)).thenAnswer(invocationOnMock -> {
+			String keywordArgument = invocationOnMock.getArgument(0);
+			return products.stream()
+					.filter(p -> p.getName().toLowerCase().contains(keywordArgument.toLowerCase()))
+					.collect(Collectors.toList());
+		});
+
+		result = productService.findByName(keyword);
+
+		Assertions.assertNotNull(result);
+		Assertions.assertEquals(products.size() - 1, result.size());
+		Assertions.assertEquals(thirdProduct.getId(), result.get(1).getId());
+		Assertions.assertEquals(thirdProduct.getName(), result.get(1).getName());
+		Assertions.assertEquals(thirdProduct.getPrice(), result.get(1).getPrice());
+
+		verify(productRepository, times(2)).findByNameContainingIgnoreCase(keyword);
+	}
+
+	@Test
+	public void testFindByName_whenThereAreNoProductsWithNameContainingKeyword() {
+		String keyword = "best";
+		when(productRepository.findByNameContainingIgnoreCase(keyword)).thenReturn(Collections.emptyList());
+
+		ProductNotFoundException exception = Assertions
+				.assertThrows(ProductNotFoundException.class, () -> productService.findByName(keyword));
+
+		Assertions.assertEquals("No results for: " + keyword, exception.getMessage());
+		verify(productRepository, times(1)).findByNameContainingIgnoreCase(keyword);
 	}
 
 	@Test
